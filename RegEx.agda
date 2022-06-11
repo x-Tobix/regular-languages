@@ -1,9 +1,11 @@
 module RegEx where
 
-open import Alphabet using (Alphabet; a ; b; Word; ε; _∷_ ; _++_)
+open import Alphabet using (Alphabet; a ; b; Word; ε; _∷_ ; _++_; _^_)
+open import Naturals using (ℕ)
 open import Decidable using (Dec ; no ; yes)
 open import List_lab using (List)
 open import Conns using (⊥)
+
 
 data RegExp : Set where
     ∅ : RegExp                       -- Empty set
@@ -22,11 +24,18 @@ data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈*₁ : ∀ {r : RegExp} → ε ∈ (r *)
   ∈*₂ : ∀ {a : Word {Alphabet}} → ∀ {r : RegExp} → a ∈ (r ⊕ (r *)) →  a ∈ (r *)
 
+example1 : (a ∷ (b ∷ ε)) ∈ ((literal a) ⊕ (literal b))
+example1 = ∈⊕ {a ∷ ε} {b ∷ ε} (∈literal {a}) (∈literal {b})
+
+example2 : ((a ∷ ε) ^ 2) ∈ ((literal a) *)
+example2 = ∈*₂ (∈⊕ {a ∷ ε} {a ∷ ε} ∈literal (∈*₂ (∈⊕ {a ∷ ε} {ε} ∈literal ∈*₁)))
+
 ⊻ : {r r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r + r₂) → ⊥
 ⊻ l r₁ (∈+ˡ w) = l w
 ⊻ l r₁ (∈+ʳ w) = r₁ w
 
 _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
+
 w ∈? ∅ = no (λ ())
 
 ε ∈? Ε = yes ∈Ε
