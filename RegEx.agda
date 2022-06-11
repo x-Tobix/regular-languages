@@ -3,6 +3,7 @@ module RegEx where
 open import Alphabet using (Alphabet; a ; b; Word; ε; _∷_ ; _++_)
 open import Decidable using (Dec ; no ; yes)
 open import List_lab using (List)
+open import Conns using (⊥)
 
 data RegExp : Set where
     ∅ : RegExp                       -- Empty set
@@ -15,11 +16,15 @@ data RegExp : Set where
 data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈Ε : ε ∈ Ε
   ∈literal : ∀ {a} → (a ∷ ε) ∈ (literal a)
-  ∈⊕ : ∀ {a b : Word {Alphabet}} → ∀ {r1 r2 : RegExp} → a ∈ r1 → b ∈ r2 → (a ++ b) ∈ (r1 ⊕ r2)
-  ∈+ˡ : ∀ {w : Word {Alphabet}} → ∀ {r1 r2 : RegExp} → w ∈ r1 → w ∈ (r1 + r2)
-  ∈+ʳ : ∀ {w : Word {Alphabet}} → ∀ {r1 r2 : RegExp} → w ∈ r2 → w ∈ (r1 + r2)
+  ∈⊕ : ∀ {a b : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → a ∈ r₁ → b ∈ r₂ → (a ++ b) ∈ (r₁ ⊕ r₂)
+  ∈+ˡ : ∀ {w : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → w ∈ r₁ → w ∈ (r₁ + r₂)
+  ∈+ʳ : ∀ {w : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → w ∈ r₂ → w ∈ (r₁ + r₂)
   ∈*₁ : ∀ {r : RegExp} → ε ∈ (r *)
   ∈*₂ : ∀ {a : Word {Alphabet}} → ∀ {r : RegExp} → a ∈ (r ⊕ (r *)) →  a ∈ (r *)
+
+⊻ : {r r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r + r₂) → ⊥
+⊻ l r₁ (∈+ˡ w) = l w
+⊻ l r₁ (∈+ʳ w) = r₁ w
 
 _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
 w ∈? ∅ = no (λ ())
@@ -32,25 +37,26 @@ w ∈? ∅ = no (λ ())
 (a ∷ ε) ∈? (literal b) = no (λ ())
 (b ∷ ε) ∈? (literal a) = no (λ ())
 (b ∷ ε) ∈? (literal b) = yes ∈literal
-(w1 ∷ (w2 ∷ ws)) ∈? (literal x) = no (λ ())
+(w₁ ∷ (w₂ ∷ ws)) ∈? (literal x) = no (λ ())
 
 ε ∈? (r *) = yes ∈*₁
 (x ∷ w) ∈? (r *) = {!!}
 
-ε ∈? (r1 ⊕ r2) with ε ∈? r1 | ε ∈? r2
-...| yes t1 | yes t2 = yes (∈⊕ t1 t2)
-...| yes t1 | no t2 = no {!!}
-...| no t1 | yes t2 = no {!!}
-...| no t1 | no t2 = no {!!}
+ε ∈? (r₁ ⊕ r₂) with ε ∈? r₁ | ε ∈? r₂
+...| yes t₁ | yes t₂ = yes (∈⊕ t₁ t₂)
+...| yes t₁ | no t₂ = no {!!}
+...| no t₁ | yes t₂ = no {!!}
+...| no t₁ | no t₂ = no {!!}
 
-(x ∷ w) ∈? (r1 ⊕ r2) with (x ∷ ε) ∈? r1 | w ∈? r2
-...| yes t1 | yes t2 = yes (∈⊕ t1 t2)
-...| yes t1 | no t2 = no {!!}
-...| no t1 | yes t2 = no {!!}
-...| no t1 | no t2 = no {!!}
+(x ∷ w) ∈? (r₁ ⊕ r₂) with (x ∷ ε) ∈? r₁ | w ∈? r₂
+...| yes t₁ | yes t₂ = yes (∈⊕ t₁ t₂)
+...| yes t₁ | no t₂ = no {!!}
+...| no t₁ | yes t₂ = no {!!}
+...| no t₁ | no t₂ = no {!!}
 
-w ∈? (r1 + r2) with w ∈? r1 | w ∈? r2
-...| yes t1 | yes  t2 = yes (∈+ˡ t1)
-...| yes t1 | no t2 = yes (∈+ˡ t1)
-...| no t1 | yes t2 = yes (∈+ʳ t2)
-...| no t1 | no t2 = no {!!}
+w ∈? (r₁ + r₂) with w ∈? r₁ | w ∈? r₂
+...| yes t₁ | yes  t₂ = yes (∈+ˡ t₁)
+...| yes t₁ | no t₂ = yes (∈+ˡ t₁)
+...| no t₁ | yes t₂ = yes (∈+ʳ t₂)
+...| no t₁ | no t₂ = no (λ x → ⊻ t₁ t₂ x)
+  
