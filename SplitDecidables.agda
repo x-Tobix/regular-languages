@@ -4,27 +4,27 @@ module SplitDecidables where
   open import Split
   open import Conns using (⊥)
 
-  SplitProp : Word {Alphabet} → Set₁
-  SplitProp s = (s₁ s₂ : Word {Alphabet}) → Split s s₁ s₂ → Set
+  -- Służy do trzymania przenośnej funkcji która dla słowa zwraca funkcję przyjmującą dwa słowa i splita składającego się z tych słów
+  GetSplitMorphismFromWords : Word {Alphabet} → Set₁
+  GetSplitMorphismFromWords w = (w₁ w₂ : Word {Alphabet}) → Split w w₁ w₂ → Set
 
-  SplitDec : {s : Word {Alphabet}} → SplitProp s → Set
-  SplitDec {s = s} P = (s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → Dec (P s₁ s₂ sp)
+  -- Sprawdzamy czy dwa słowa słowa tworzą słowo startowe ze splitu
+  GetSplitDecidable : {w : Word {Alphabet}} → GetSplitMorphismFromWords w → Set
+  GetSplitDecidable {w} Morphism = (w₁ w₂ : Word {Alphabet}) -> (sp : Split w w₁ w₂) → Dec (Morphism w₁ w₂ sp)
 
-  data HasSplit (s : Word {Alphabet})(P : SplitProp s) : Set where
-    exists : (s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂)
-           → P s₁ s₂ sp
-           → HasSplit s P
+  data HasSplit (s : Word {Alphabet})(P : GetSplitMorphismFromWords s) : Set where
+    exists : (s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → P s₁ s₂ sp → HasSplit s P
            
-  decHasSplit : (s : Word {Alphabet}){P : SplitProp s} → (SplitDec P) → Dec (HasSplit s P)
+  decHasSplit : (s : Word {Alphabet}){P : GetSplitMorphismFromWords s} → (GetSplitDecidable P) → Dec (HasSplit s P)
   decHasSplit ε decP with decP ε ε (null ε)
   decHasSplit ε decP | yes p = yes (exists ε ε (null ε) p)
   decHasSplit ε decP | no ¬p = no contra
     where contra : HasSplit ε _ → ⊥
           contra (exists .ε .ε (null .ε) x) = ¬p x
   decHasSplit (x ∷ s) decP with decHasSplit s (shiftOverDec x decP) | decP _ _ (null (x ∷ s))
-    where ShiftOver : (s : Word {Alphabet})(c : Alphabet) → SplitProp (c ∷ s) → SplitProp s
+    where ShiftOver : (s : Word {Alphabet})(c : Alphabet) → GetSplitMorphismFromWords (c ∷ s) → GetSplitMorphismFromWords s
           ShiftOver s c P s₁ s₂ sp = P (c ∷ s₁) s₂ (cont c s sp)
-          shiftOverDec : {s : Word {Alphabet}}(c : Alphabet){P : SplitProp (c ∷ s)} → (SplitDec P) → (SplitDec (ShiftOver s c P))
+          shiftOverDec : {s : Word {Alphabet}}(c : Alphabet){P : GetSplitMorphismFromWords (c ∷ s)} → (GetSplitDecidable P) → (GetSplitDecidable (ShiftOver s c P))
           shiftOverDec c dec s₁ s₂ sp = dec (c ∷ s₁) s₂ (cont c _ sp)
   decHasSplit (x ∷ s) decP | yes p | yes p₁ = yes (exists ε (x ∷ s) (null (x ∷ s)) p₁)
   decHasSplit (x ∷ s) decP | yes (exists s₁ s₂ sp x₁) | no ¬p = yes (exists (x ∷ s₁) s₂ (cont x s sp) x₁)
