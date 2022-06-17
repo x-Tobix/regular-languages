@@ -8,12 +8,13 @@ module SplitDecidables where
   GetSplitMorphismFromWords : Word {Alphabet} → Set₁
   GetSplitMorphismFromWords w = (w₁ w₂ : Word {Alphabet}) → Split w w₁ w₂ → Set
 
-  -- Sprawdzamy czy dwa słowa słowa tworzą słowo startowe ze splitu
+  -- Dostajemy decidable dla istnienia splitu danych słow w słowie wyjściowym
   GetSplitDecidable : {w : Word {Alphabet}} → GetSplitMorphismFromWords w → Set
   GetSplitDecidable {w} Morphism = (w₁ w₂ : Word {Alphabet}) -> (sp : Split w w₁ w₂) → Dec (Morphism w₁ w₂ sp)
 
-  data HasSplit (s : Word {Alphabet})(P : GetSplitMorphismFromWords s) : Set where
-    exists : (s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → P s₁ s₂ sp → HasSplit s P
+  -- Obiekt decydujący 
+  data HasSplit (w : Word {Alphabet})(Morphism : GetSplitMorphismFromWords w) : Set where
+    exists : (w₁ w₂ : Word {Alphabet}) → (sp : Split w w₁ w₂) → Morphism w₁ w₂ sp → HasSplit w Morphism
            
   decHasSplit : (s : Word {Alphabet}){P : GetSplitMorphismFromWords s} → (GetSplitDecidable P) → Dec (HasSplit s P)
   decHasSplit ε decP with decP ε ε (null ε)
