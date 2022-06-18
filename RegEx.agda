@@ -5,10 +5,10 @@ open import Naturals using (ℕ)
 open import Decidable using (Dec ; no ; yes)
 open import List_lab using (List)
 open import Conns using (⊥)
-open import SplitDecidables using (decHasSplit; exists)
+open import SplitDecidables using (∈?Split; ∃)
 open import Split
 
-
+-- Główny obiekt wyrażenia regularnego
 data RegExp : Set where
     ∅ : RegExp                       -- Empty set
     Ε : RegExp                        -- Empty word
@@ -17,6 +17,7 @@ data RegExp : Set where
     _⊕_ : RegExp → RegExp → RegExp  -- Concatenation
     _+_ : RegExp → RegExp → RegExp   -- Sum
 
+-- Mówi nam o należeniu do wyrażenia regularnego
 data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈Ε : ε ∈ Ε
   ∈literal : ∀ {a} → (a ∷ ε) ∈ (literal a)
@@ -33,8 +34,8 @@ example1 = ∈⊕ {(a ∷ (b ∷ ε))} {a ∷ ε} {b ∷ ε} (cont a (b ∷ ε) 
 example2 : ((a ∷ ε) ^ 2) ∈ ((literal a) *)
 example2 = ∈*₂ (∈⊕ {a ∷ (a ∷ ε)} {a ∷ ε} {a ∷ ε} (cont a (a ∷ ε) (null (a ∷ ε))) ∈literal (∈*₂ (∈⊕ {a ∷ ε} {a ∷ ε} {ε} (cont a ε (null ε)) ∈literal ∈*₁)))
 
-
-data ⨁Cont (r₁ r₂ : RegExp) (w₁ w₂ : Word {Alphabet}) : Set where
+-- Obiekt imitujący słowa należace do konkatenacji
+data ⨁Cont (r₁ r₂ : RegExp)(w₁ w₂ : Word {Alphabet}) : Set where
   get⨁Cont : w₁ ∈ r₁ → w₂ ∈ r₂ → ⨁Cont r₁ r₂ w₁ w₂
 
 data *Cont (r : RegExp) :  Word {Alphabet} →  Word {Alphabet} → Set where
@@ -92,16 +93,17 @@ w ∈? (r₁ + r₂) with w ∈? r₁ | w ∈? r₂
 ...| no t₁ | yes t₂ = yes (∈+ʳ t₂)
 ...| no t₁ | no t₂ = no (λ x → ⊻ t₁ t₂ x)
 
-w ∈? (r₁ ⊕ r₂) with decHasSplit w (dec⊕ r₁ r₂ w)
-...| yes (exists s₁ s₂ sp (get⨁Cont x x₁)) = yes (∈⊕ {w} {s₁} {s₂} {r₁} {r₂} sp x x₁)
-...| no ¬p = no contra
-  where contra : w ∈ (r₁ ⊕ r₂) → ⊥
-        contra (∈⊕ {w} {s₁} {s₂} {r₁} {r₂} x p p₁) = ¬p (exists s₁ s₂ x (get⨁Cont p p₁))
+w ∈? (r₁ ⊕ r₂) with ∈?Split w (dec⊕ r₁ r₂ w)
+...| yes (∃ w₁ w₂ sp (get⨁Cont x x₁)) = yes (∈⊕ {w} {w₁} {w₂} {r₁} {r₂} sp x x₁)
+...| no p = no getNoConcat
+  where getNoConcat : w ∈ (r₁ ⊕ r₂) → ⊥
+        getNoConcat (∈⊕ {w} {w₁} {w₂} {r₁} {r₂} x p₁ p₂) = p (∃ w₁ w₂ x (get⨁Cont p₁ p₂))
   
 ε ∈? (r *) = yes ∈*₁
-(x ∷ w) ∈? (r *) with decHasSplit (x ∷ w) (dec* r (x ∷ w))
-...| yes (exists .(l ∷ w₁) s₂ sp (get*Cont l w₁ .s₂ x₁ x₂)) = yes (∈*₂ (∈⊕ sp x₁ x₂))
+(x ∷ w) ∈? (r *) with ∈?Split (x ∷ w) (dec* r (x ∷ w))
+...| yes (∃ .(l ∷ w₁) s₂ sp (get*Cont l w₁ .s₂ x₁ x₂)) = yes (∈*₂ (∈⊕ sp x₁ x₂))
 ...| no ¬p = no contra
   where contra : (x ∷ w) ∈ (r *) → ⊥
         contra (∈*₂ (∈⊕ (null .(x ∷ w)) ε∈r xw∈r*)) = contra xw∈r*
-        contra (∈*₂ {x ∷ w} {r} (∈⊕ (cont .x .w sp) xw∈r w2∈r*)) = ¬p (exists (x ∷ _) _ (cont x w sp) (get*Cont x _ _ xw∈r w2∈r*))
+        contra (∈*₂ {x ∷ w} {r} (∈⊕ (cont .x .w sp) xw∈r w2∈r*)) = ¬p (∃ (x ∷ _) _ (cont x w sp) (get*Cont x _ _ xw∈r w2∈r*))
+ 

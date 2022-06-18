@@ -12,25 +12,26 @@ module SplitDecidables where
   GetSplitDecidable : {w : Word {Alphabet}} → GetSplitMorphismFromWords w → Set
   GetSplitDecidable {w} Morphism = (w₁ w₂ : Word {Alphabet}) -> (sp : Split w w₁ w₂) → Dec (Morphism w₁ w₂ sp)
 
-  -- Obiekt decydujący 
-  data HasSplit (w : Word {Alphabet})(Morphism : GetSplitMorphismFromWords w) : Set where
-    exists : (w₁ w₂ : Word {Alphabet}) → (sp : Split w w₁ w₂) → Morphism w₁ w₂ sp → HasSplit w Morphism
-           
-  decHasSplit : (s : Word {Alphabet}){P : GetSplitMorphismFromWords s} → (GetSplitDecidable P) → Dec (HasSplit s P)
-  decHasSplit ε decP with decP ε ε (null ε)
-  decHasSplit ε decP | yes p = yes (exists ε ε (null ε) p)
-  decHasSplit ε decP | no ¬p = no contra
-    where contra : HasSplit ε _ → ⊥
-          contra (exists .ε .ε (null .ε) x) = ¬p x
-  decHasSplit (x ∷ s) decP with decHasSplit s (shiftOverDec x decP) | decP _ _ (null (x ∷ s))
-    where ShiftOver : (s : Word {Alphabet})(c : Alphabet) → GetSplitMorphismFromWords (c ∷ s) → GetSplitMorphismFromWords s
-          ShiftOver s c P s₁ s₂ sp = P (c ∷ s₁) s₂ (cont c s sp)
-          shiftOverDec : {s : Word {Alphabet}}(c : Alphabet){P : GetSplitMorphismFromWords (c ∷ s)} → (GetSplitDecidable P) → (GetSplitDecidable (ShiftOver s c P))
-          shiftOverDec c dec s₁ s₂ sp = dec (c ∷ s₁) s₂ (cont c _ sp)
-  decHasSplit (x ∷ s) decP | yes p | yes p₁ = yes (exists ε (x ∷ s) (null (x ∷ s)) p₁)
-  decHasSplit (x ∷ s) decP | yes (exists s₁ s₂ sp x₁) | no ¬p = yes (exists (x ∷ s₁) s₂ (cont x s sp) x₁)
-  decHasSplit (x ∷ s) decP | no ¬p | yes p = yes (exists ε (x ∷ s) (null (x ∷ s)) p)
-  decHasSplit (x ∷ s) decP | no ¬p | no ¬p₁ = no contra
-    where contra : HasSplit (x ∷ s) _ → ⊥
-          contra (exists .ε .(x ∷ s) (null ._) x₁) = ¬p₁ x₁
-          contra (exists (.x ∷ s₁) s₂ (cont .x .s sp) x₁) = ¬p (exists s₁ s₂ sp x₁)
+  -- Obiekt decydujący czy dane słowa tworzą splita
+  data ∈Split (w : Word {Alphabet})(Morphism : GetSplitMorphismFromWords w) : Set where
+    ∃ : (w₁ w₂ : Word {Alphabet}) → (sp : Split w w₁ w₂) → Morphism w₁ w₂ sp → ∈Split w Morphism
+
+  -- Mówi nam o tym czy dane słowo ma splita          
+  ∈?Split : (w : Word {Alphabet}) → {P : GetSplitMorphismFromWords w} → (GetSplitDecidable P) → Dec (∈Split w P)
+  ∈?Split ε getSD with getSD ε ε (null ε)
+  ...| yes p = yes (∃ ε ε (null ε) p)
+  ...| no p = no getNoSplit
+    where getNoSplit : ∈Split ε _ → ⊥
+          getNoSplit (∃ ε ε (null ε) x) = p x
+  ∈?Split (x ∷ w) getSD with ∈?Split w (GetDecidableForNoFirstElementMorphism x getSD) | getSD _ _ (null (x ∷ w))
+    where GetNoFirstElementMorphism : (w : Word {Alphabet}) → (l : Alphabet) → GetSplitMorphismFromWords (l ∷ w) → GetSplitMorphismFromWords w
+          GetNoFirstElementMorphism w l P w₁ w₂ sp = P (l ∷ w₁) w₂ (cont l w sp)
+          GetDecidableForNoFirstElementMorphism : {w : Word {Alphabet}} → (l : Alphabet) → {P : GetSplitMorphismFromWords (l ∷ w)} → (GetSplitDecidable P) → (GetSplitDecidable (GetNoFirstElementMorphism w l P))
+          GetDecidableForNoFirstElementMorphism l dec w₁ w₂ sp = dec (l ∷ w₁) w₂ (cont l _ sp)
+  ...| yes _ | yes p = yes (∃ ε (x ∷ w) (null (x ∷ w)) p)
+  ...| yes (∃ w₁ w₂ sp x₁) | no _ = yes (∃ (x ∷ w₁) w₂ (cont x w sp) x₁)
+  ...| no _ | yes p = yes (∃ ε (x ∷ w) (null (x ∷ w)) p)
+  ...| no p₁ | no p₂ = no getNoSplit
+    where getNoSplit : ∈Split (x ∷ w) _ → ⊥
+          getNoSplit (∃ ε (x ∷ w) (null _) x₁) = p₂ x₁
+          getNoSplit (∃ (x ∷ w₁) w₂ (cont x w sp) x₁) = p₁ (∃ w₁ w₂ sp x₁)
