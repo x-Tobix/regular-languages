@@ -1,6 +1,6 @@
 module Alphabet where
 
-open import Naturals using (ℕ;zero;suc)
+open import Naturals using (ℕ; zero; suc; _+_)
 
 data Alphabet : Set where
     a : Alphabet
@@ -21,3 +21,7 @@ w ^ zero = ε
 w ^ suc zero = w
 w ^ suc (suc k) = w ++ (w ^ (suc k))
 
+-- Word length
+length : (w : Word {Alphabet}) → ℕ
+length ε = zero
+length (x ∷ w) = 1 + (length w)

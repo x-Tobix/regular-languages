@@ -12,7 +12,7 @@ module SplitDecidables where
   GetSplitDecidable : {w : Word {Alphabet}} → GetSplitMorphismFromWords w → Set
   GetSplitDecidable {w} Morphism = (w₁ w₂ : Word {Alphabet}) -> (sp : Split w w₁ w₂) → Dec (Morphism w₁ w₂ sp)
 
-  -- Obiekt decydujący czy dane słowa tworzą splita
+  -- typ danych mówiący o tym czy dane słowa tworzą splita
   data ∈Split (w : Word {Alphabet})(Morphism : GetSplitMorphismFromWords w) : Set where
     ∃ : (w₁ w₂ : Word {Alphabet}) → (sp : Split w w₁ w₂) → Morphism w₁ w₂ sp → ∈Split w Morphism
 
