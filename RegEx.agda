@@ -8,7 +8,7 @@ open import Conns using (⊥)
 open import SplitDecidables using (decHasSplit; exists)
 open import Split
 
-
+-- Typ danych reprezentujacy wyrazenia regularne
 data RegExp : Set where
     ∅ : RegExp                       -- Empty set
     Ε : RegExp                        -- Empty word
@@ -17,6 +17,7 @@ data RegExp : Set where
     _⊕_ : RegExp → RegExp → RegExp  -- Concatenation
     _+_ : RegExp → RegExp → RegExp   -- Sum
 
+-- Typ danych mowiacy o przynaleznosci danego slowa do jezyka generowanego przez dane wyrazenie regularne
 data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈Ε : ε ∈ Ε
   ∈literal : ∀ {a} → (a ∷ ε) ∈ (literal a)
@@ -26,29 +27,35 @@ data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈*₁ : ∀ {r : RegExp} → ε ∈ (r *)
   ∈*₂ : ∀ {a : Word {Alphabet}} → ∀ {r : RegExp} → a ∈ (r ⊕ (r *)) →  a ∈ (r *)
 
-
+-- Przyklady wykorzystania
 example1 : (a ∷ (b ∷ ε)) ∈ ((literal a) ⊕ (literal b))
 example1 = ∈⊕ {(a ∷ (b ∷ ε))} {a ∷ ε} {b ∷ ε} (cont a (b ∷ ε) (null (b ∷ ε))) (∈literal {a}) (∈literal {b})
 
 example2 : ((a ∷ ε) ^ 2) ∈ ((literal a) *)
 example2 = ∈*₂ (∈⊕ {a ∷ (a ∷ ε)} {a ∷ ε} {a ∷ ε} (cont a (a ∷ ε) (null (a ∷ ε))) ∈literal (∈*₂ (∈⊕ {a ∷ ε} {a ∷ ε} {ε} (cont a ε (null ε)) ∈literal ∈*₁)))
 
-
+-- Funkcje pomocnicze
+-- Typ reprezentujacy wyrazenia regularne generujace poczatek i koniec slowa w przypadku konkatenacji oraz te slowa
 data ⨁Cont (r₁ r₂ : RegExp) (w₁ w₂ : Word {Alphabet}) : Set where
   get⨁Cont : w₁ ∈ r₁ → w₂ ∈ r₂ → ⨁Cont r₁ r₂ w₁ w₂
 
+-- Typ reprezentujacy wyrazenie regularne oraz poczatek i koniec slowa w przypadku, gdy ich konkatenacja nalezy do gwiazki Kleenego tego wyrazenia
 data *Cont (r : RegExp) :  Word {Alphabet} →  Word {Alphabet} → Set where
   get*Cont : (c : Alphabet)(w₁ w₂ : Word {Alphabet}) → (c ∷ w₁) ∈ r → w₂ ∈ (r *)→ *Cont r (c ∷ w₁) w₂
 
+-- Funkcja zwracajaca dowod, ze  wyraznie regularne genruje poczatek slowa w konkatenacji
 get⊕r₁ : {r₁ r₂ : RegExp}{w₁ w₂ : Word {Alphabet}} → ⨁Cont r₁ r₂ w₁ w₂ → w₁ ∈ r₁
 get⊕r₁ (get⨁Cont ∈₁ _) = ∈₁
 
+-- Funkcja zwracajaca dowod, ze wyraznie regularne genruje koniec slowa w konkatenacji
 get⊕r₂ : {r₁ r₂ : RegExp}{s₁ s₂ : Word{Alphabet}} → ⨁Cont r₁ r₂ s₁ s₂ → s₂ ∈ r₂
 get⊕r₂ (get⨁Cont _ ∈₂) = ∈₂
 
+-- Funkcja zwracajaca dowod, ze wyrzenie regularne r generuje poczatek slowa
 get*r₁ : {r : RegExp}{s₁ s₂ :  Word{Alphabet}} → *Cont r s₁ s₂ → s₁ ∈ r
 get*r₁ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₁
 
+-- Funkcja zwracajaca dowod, ze wyrzenie regularne r* generuje koniec slowa
 get*r₂ : {r : RegExp}{s₁ s₂ :  Word{Alphabet}} → *Cont r s₁ s₂ → s₂ ∈ (r *)
 get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 
@@ -56,8 +63,11 @@ get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 ⊻ l r₁ (∈+ˡ w) = l w
 ⊻ l r₁ (∈+ʳ w) = r₁ w
 
+-- Funkcja decydujaca o przynaleznosci danego slowa do jezyka generowanego przez dane wyrazenie regularne
 _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
 
+-- Jeszcze troche funkcji pomocniczych
+-- Funkcja decydujaca o tym czy slowo o danym podziale nalezy do jezyka generowanego przez konkatenacje danych wyrazen regularnych
 dec⊕ : (r₁ r₂ : RegExp)(s s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → Dec (⨁Cont r₁ r₂ s₁ s₂)    
 dec⊕ r₁ r₂ s s₁ s₂ sp with s₁ ∈? r₁ | s₂ ∈? r₂
 ...| yes p | yes p₁ = yes (get⨁Cont p p₁)
@@ -65,6 +75,7 @@ dec⊕ r₁ r₂ s s₁ s₂ sp with s₁ ∈? r₁ | s₂ ∈? r₂
 ...| no ¬p | yes p = no (λ p → ¬p (get⊕r₁ p))
 ...| no ¬p | no ¬p₁ = no (λ p → ¬p (get⊕r₁ p))
 
+-- Funkcja decydujaca o tym czy slowo o zadanym podziale nalezy do jezyka generowanego przez gwiazde Kleenego danego wyrazenia regularnego 
 {-# NON_TERMINATING #-}
 dec* : (r : RegExp)(s s₁ s₂ :  Word {Alphabet})(sp : Split s s₁ s₂) → Dec (*Cont r s₁ s₂)
 dec* r s .ε .s (null .s) = no (λ ())
