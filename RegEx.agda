@@ -27,6 +27,17 @@ data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈*₁ : ∀ {r : RegExp} → ε ∈ (r *)
   ∈*₂ : ∀ {a : Word {Alphabet}} → ∀ {r : RegExp} → a ∈ (r ⊕ (r *)) →  a ∈ (r *)
 
+-- Łączność sumy wyrażeń regularnych
++conn : {w : Word {Alphabet}} → {r₁ r₂ r₃ : RegExp} → w ∈ (r₁ + (r₂ + r₃)) → w ∈ ((r₁ + r₂) + r₃)
++conn (∈+ˡ w) = ∈+ˡ (∈+ˡ w)
++conn (∈+ʳ (∈+ˡ w)) = ∈+ˡ (∈+ʳ w)
++conn (∈+ʳ (∈+ʳ w)) = ∈+ʳ w
+
+-- Przemienność sumy wyrażeń regularnych
++alt : {w : Word {Alphabet}} → {r₁ r₂ : RegExp} → w ∈ (r₁ + r₂) → w ∈ (r₂ + r₁)
++alt (∈+ˡ w) = ∈+ʳ w
++alt (∈+ʳ w) = ∈+ˡ w
+
 -- Przyklady wykorzystania
 example1 : (a ∷ (b ∷ ε)) ∈ ((literal a) ⊕ (literal b))
 example1 = ∈⊕ {(a ∷ (b ∷ ε))} {a ∷ ε} {b ∷ ε} (cont a (b ∷ ε) (null (b ∷ ε))) (∈literal {a}) (∈literal {b})
@@ -116,3 +127,4 @@ w ∈? (r₁ ⊕ r₂) with ∈?Split w (dec⊕ r₁ r₂ w)
   where contra : (x ∷ w) ∈ (r *) → ⊥
         contra (∈*₂ (∈⊕ (null .(x ∷ w)) ε∈r xw∈r*)) = contra xw∈r*
         contra (∈*₂ {x ∷ w} {r} (∈⊕ (cont .x .w sp) xw∈r w2∈r*)) = ¬p (∃ (x ∷ _) _ (cont x w sp) (get*Cont x _ _ xw∈r w2∈r*))
+ 
