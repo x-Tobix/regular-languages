@@ -10,22 +10,22 @@ open import Split
 
 -- Typ danych reprezentujacy wyrazenia regularne
 data RegExp : Set where
-    ∅ : RegExp                       -- Empty set
-    Ε : RegExp                        -- Empty word
-    literal : Alphabet → RegExp      -- literal
-    _* : RegExp → RegExp             -- Kleene star
-    _⊕_ : RegExp → RegExp → RegExp  -- Concatenation
-    _+_ : RegExp → RegExp → RegExp   -- Sum
+    ∅ : RegExp                       -- Zbior pusty
+    Ε : RegExp                        -- Slowo puste
+    literal : Alphabet → RegExp      -- Literal
+    _+_ : RegExp → RegExp → RegExp   -- Suma
+    _⊕_ : RegExp → RegExp → RegExp  -- Konkatenacja
+    _* : RegExp → RegExp             -- Gwiazdka Kleenego
 
 -- Typ danych mowiacy o przynaleznosci danego slowa do jezyka generowanego przez dane wyrazenie regularne
 data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈Ε : ε ∈ Ε
   ∈literal : ∀ {a} → (a ∷ ε) ∈ (literal a)
-  ∈⊕ : ∀ {w w₁ w₂ : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → Split.Split w w₁ w₂ → w₁ ∈ r₁ → w₂ ∈ r₂ → w ∈ (r₁ ⊕ r₂)
   ∈+ˡ : ∀ {w : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → w ∈ r₁ → w ∈ (r₁ + r₂)
   ∈+ʳ : ∀ {w : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → w ∈ r₂ → w ∈ (r₁ + r₂)
+  ∈⊕ : ∀ {w w₁ w₂ : Word {Alphabet}} → ∀ {r₁ r₂ : RegExp} → Split.Split w w₁ w₂ → w₁ ∈ r₁ → w₂ ∈ r₂ → w ∈ (r₁ ⊕ r₂)
   ∈*₁ : ∀ {r : RegExp} → ε ∈ (r *)
-  ∈*₂ : ∀ {a : Word {Alphabet}} → ∀ {r : RegExp} → a ∈ (r ⊕ (r *)) →  a ∈ (r *)
+  ∈*₂ : ∀ {w : Word {Alphabet}} → ∀ {r : RegExp} → w ∈ (r ⊕ (r *)) →  w ∈ (r *)
 
 -- Łączność sumy wyrażeń regularnych
 +conn : {w : Word {Alphabet}} → {r₁ r₂ r₃ : RegExp} → w ∈ (r₁ + (r₂ + r₃)) → w ∈ ((r₁ + r₂) + r₃)
@@ -70,7 +70,7 @@ get*r₁ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₁
 get*r₂ : {r : RegExp}{s₁ s₂ :  Word{Alphabet}} → *Cont r s₁ s₂ → s₂ ∈ (r *)
 get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 
--- Funkcja zwracająca dowód, że jeśli z w ∈ r₁ wynika fałsz i z w ∈ r₂ wynika fałsz to z w ∈ (r₁ + r₂) wynika fałsz 
+-- Funkcja mowiaca, że jeśli z w ∈ r₁ wynika fałsz i z w ∈ r₂ wynika fałsz to z w ∈ (r₁ + r₂) wynika fałsz 
 ⊻ : {r₁ r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r₁ → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r₁ + r₂) → ⊥
 ⊻ l r (∈+ˡ w) = l w
 ⊻ l r (∈+ʳ w) = r w
@@ -82,10 +82,9 @@ _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
 -- Funkcja decydujaca o tym czy slowo o danym podziale nalezy do jezyka generowanego przez konkatenacje danych wyrazen regularnych
 dec⊕ : (r₁ r₂ : RegExp)(s s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → Dec (⨁Cont r₁ r₂ s₁ s₂)    
 dec⊕ r₁ r₂ s s₁ s₂ sp with s₁ ∈? r₁ | s₂ ∈? r₂
-...| yes p | yes p₁ = yes (get⨁Cont p p₁)
-...| yes p | no ¬p = no (λ p → ¬p (get⊕r₂ p))
-...| no ¬p | yes p = no (λ p → ¬p (get⊕r₁ p))
-...| no ¬p | no ¬p₁ = no (λ p → ¬p (get⊕r₁ p))
+...| yes p₁ | yes p₂ = yes (get⨁Cont p₁ p₂)
+...| yes p  | no ¬p  = no (λ p → ¬p (get⊕r₂ p))
+...| no ¬p  | _      = no (λ p → ¬p (get⊕r₁ p))
 
 -- Funkcja decydujaca o tym czy slowo o zadanym podziale nalezy do jezyka generowanego przez gwiazde Kleenego danego wyrazenia regularnego 
 {-# NON_TERMINATING #-}
@@ -112,8 +111,8 @@ w ∈? ∅ = no (λ ())
 w ∈? (r₁ + r₂) with w ∈? r₁ | w ∈? r₂
 ...| yes t₁ | yes  t₂ = yes (∈+ˡ t₁)
 ...| yes t₁ | no t₂ = yes (∈+ˡ t₁)
-...| no t₁ | yes t₂ = yes (∈+ʳ t₂)
-...| no t₁ | no t₂ = no (λ x → ⊻ t₁ t₂ x)
+...| no t₁  | yes t₂ = yes (∈+ʳ t₂)
+...| no t₁  | no t₂ = no (λ x → ⊻ t₁ t₂ x)
 
 w ∈? (r₁ ⊕ r₂) with ∈?Split w (dec⊕ r₁ r₂ w)
 ...| yes (∃ w₁ w₂ sp (get⨁Cont x x₁)) = yes (∈⊕ {w} {w₁} {w₂} {r₁} {r₂} sp x x₁)
@@ -124,8 +123,8 @@ w ∈? (r₁ ⊕ r₂) with ∈?Split w (dec⊕ r₁ r₂ w)
 ε ∈? (r *) = yes ∈*₁
 (x ∷ w) ∈? (r *) with ∈?Split (x ∷ w) (dec* r (x ∷ w))
 ...| yes (∃ .(l ∷ w₁) s₂ sp (get*Cont l w₁ .s₂ x₁ x₂)) = yes (∈*₂ (∈⊕ sp x₁ x₂))
-...| no ¬p = no contra
-  where contra : (x ∷ w) ∈ (r *) → ⊥
-        contra (∈*₂ (∈⊕ (null .(x ∷ w)) ε∈r xw∈r*)) = contra xw∈r*
-        contra (∈*₂ {x ∷ w} {r} (∈⊕ (cont .x .w sp) xw∈r w2∈r*)) = ¬p (∃ (x ∷ _) _ (cont x w sp) (get*Cont x _ _ xw∈r w2∈r*))
+...| no ¬p = no getNoStar
+  where getNoStar : (x ∷ w) ∈ (r *) → ⊥
+        getNoStar (∈*₂ (∈⊕ (null .(x ∷ w)) ε∈r xw∈r*)) = getNoStar xw∈r*
+        getNoStar (∈*₂ {x ∷ w} {r} (∈⊕ (cont .x .w sp) xw∈r w2∈r*)) = ¬p (∃ (x ∷ _) _ (cont x w sp) (get*Cont x _ _ xw∈r w2∈r*))
  
