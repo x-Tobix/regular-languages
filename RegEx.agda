@@ -45,6 +45,12 @@ example1 = ∈⊕ {(a ∷ (b ∷ ε))} {a ∷ ε} {b ∷ ε} (cont a (b ∷ ε) 
 example2 : ((a ∷ ε) ^ 2) ∈ ((literal a) *)
 example2 = ∈*₂ (∈⊕ {a ∷ (a ∷ ε)} {a ∷ ε} {a ∷ ε} (cont a (a ∷ ε) (null (a ∷ ε))) ∈literal (∈*₂ (∈⊕ {a ∷ ε} {a ∷ ε} {ε} (cont a ε (null ε)) ∈literal ∈*₁)))
 
+example3 : (a ∷ ε) ∈ ((literal a) + (literal b))
+example3 = ∈+ˡ ∈literal
+
+example4 : (b ∷ ε) ∈ ((literal a) + (literal b))
+example4 = ∈+ʳ ∈literal
+
 -- Funkcje pomocnicze
 -- Typ reprezentujacy wyrazenia regularne generujace poczatek i koniec slowa w przypadku konkatenacji oraz te slowa
 data ⨁Cont (r₁ r₂ : RegExp) (w₁ w₂ : Word {Alphabet}) : Set where
