@@ -23,11 +23,11 @@ module SplitDecidables where
   ...| no p = no getNoSplit
     where getNoSplit : ∈Split ε _ → ⊥
           getNoSplit (∃ ε ε (null ε) x) = p x
-  ∈?Split (x ∷ w) getSD with ∈?Split w (GetDecidableForNoFirstElementMorphism x getSD) | getSD _ _ (null (x ∷ w))
-    where GetNoFirstElementMorphism : (w : Word {Alphabet}) → (l : Alphabet) → GetSplitMorphismFromWords (l ∷ w) → GetSplitMorphismFromWords w
-          GetNoFirstElementMorphism w l P w₁ w₂ sp = P (l ∷ w₁) w₂ (cont l w sp)
-          GetDecidableForNoFirstElementMorphism : {w : Word {Alphabet}} → (l : Alphabet) → {P : GetSplitMorphismFromWords (l ∷ w)} → (GetSplitDecidable P) → (GetSplitDecidable (GetNoFirstElementMorphism w l P))
-          GetDecidableForNoFirstElementMorphism l dec w₁ w₂ sp = dec (l ∷ w₁) w₂ (cont l _ sp)
+  ∈?Split (x ∷ w) getSD with ∈?Split w (GetDecidableForShiftedFirstElementMorphism x getSD) | getSD _ _ (null (x ∷ w))
+    where GetShiftedFirstElementMorphism : (w : Word {Alphabet}) → (l : Alphabet) → GetSplitMorphismFromWords (l ∷ w) → GetSplitMorphismFromWords w
+          GetShiftedFirstElementMorphism w l P w₁ w₂ sp = P (l ∷ w₁) w₂ (cont l w sp)
+          GetDecidableForShiftedFirstElementMorphism : {w : Word {Alphabet}} → (l : Alphabet) → {P : GetSplitMorphismFromWords (l ∷ w)} → (GetSplitDecidable P) → (GetSplitDecidable (GetShiftedFirstElementMorphism w l P))
+          GetDecidableForShiftedFirstElementMorphism l dec w₁ w₂ sp = dec (l ∷ w₁) w₂ (cont l _ sp)
   ...| yes _ | yes p = yes (∃ ε (x ∷ w) (null (x ∷ w)) p)
   ...| yes (∃ w₁ w₂ sp x₁) | no _ = yes (∃ (x ∷ w₁) w₂ (cont x w sp) x₁)
   ...| no _ | yes p = yes (∃ ε (x ∷ w) (null (x ∷ w)) p)

@@ -21,7 +21,7 @@ w ^ zero = ε
 w ^ suc zero = w
 w ^ suc (suc k) = w ++ (w ^ (suc k))
 
--- Word length
+-- długość słowa
 length : (w : Word {Alphabet}) → ℕ
 length ε = zero
 length (x ∷ w) = 1 + (length w)
