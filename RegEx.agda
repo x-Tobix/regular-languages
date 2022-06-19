@@ -13,7 +13,7 @@ data RegExp : Set where
     ∅ : RegExp                       -- Zbior pusty
     Ε : RegExp                        -- Slowo puste
     literal : Alphabet → RegExp      -- Literal
-    _+_ : RegExp → RegExp → RegExp   -- Suma
+    _+_ : RegExp → RegExp → RegExp  -- Suma
     _⊕_ : RegExp → RegExp → RegExp  -- Konkatenacja
     _* : RegExp → RegExp             -- Gwiazdka Kleenego
 
