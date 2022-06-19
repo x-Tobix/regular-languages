@@ -70,9 +70,10 @@ get*r₁ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₁
 get*r₂ : {r : RegExp}{s₁ s₂ :  Word{Alphabet}} → *Cont r s₁ s₂ → s₂ ∈ (r *)
 get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 
-⊻ : {r r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r + r₂) → ⊥
-⊻ l r₁ (∈+ˡ w) = l w
-⊻ l r₁ (∈+ʳ w) = r₁ w
+-- Funkcja zwracająca dowód, że jeśli z w ∈ r₁ wynika fałsz i z w ∈ r₂ wynika fałsz to z w ∈ (r₁ + r₂) wynika fałsz 
+⊻ : {r₁ r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r₁ → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r₁ + r₂) → ⊥
+⊻ l r (∈+ˡ w) = l w
+⊻ l r (∈+ʳ w) = r w
 
 -- Funkcja decydujaca o przynaleznosci danego slowa do jezyka generowanego przez dane wyrazenie regularne
 _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
