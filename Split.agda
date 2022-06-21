@@ -11,6 +11,9 @@ data Split : Word {Alphabet} → Word {Alphabet} → Word {Alphabet} → Set whe
 
 -- Poprawnosc definicji
 -- Chcemy Split w w1 w1 <=> l = w1++w2
+-- Najpierw rozbijamy Split w zależności od słowa w
+-- Dostajemy dwa przypadki, czyli słowo puste i słowo zawierające co najmniej jedną literkę
+-- Następnie tworzymy dowód przy użyciu konstruktorów null dla pustego słowa i cont dla słowa niepustego
 ⇒ : (w w1 w2 : Word {Alphabet}) → Split w w1 w2 → w ≡ (w1 ++ w2)
 ⇒ w ε .w (null .w) = refl
 ⇒ (x ∷ w) (x ∷ w1) w2 (cont x w sp) rewrite ⇒ _ w1 w2 sp = refl

@@ -16,7 +16,13 @@ module SplitDecidables where
   data ∈Split (w : Word {Alphabet})(Morphism : GetSplitMorphismFromWords w) : Set where
     ∃ : (w₁ w₂ : Word {Alphabet}) → (sp : Split w w₁ w₂) → Morphism w₁ w₂ sp → ∈Split w Morphism
 
-  -- Mówi nam o tym czy dane słowo ma splita          
+  -- Funkcja sprawdzająca czy dane słowa w₁ i w₂ po konkatenacji tworzą słowo w
+  -- Rozbijamy po wartości GetSplitDecidable P, gdzie P jest GetSplitMorhpism w
+  -- Innymi słowy dostajemy decidable dla danego słowa
+  -- Dla pustego słowa jest proste sprawdzenie bo może być tylko Split ε ε ε, czyli w₁ i w₂ muszą być równe ε
+  -- Dla słowa zawierającego jakieś literki bierzemy to słowo w ='abaaaba' i sprawdzamy czy Split w ε w się zgadza oraz rekurencyjne czy dane słowa tworzą Split w 'a' 'baaaba'
+  -- Innymi słowy sprawdzamy czy obecny podział (czyli czy obecny split to Split w w₁ w₂) jest dobry a jak nie to przesuwamy literki do pierwszej części Split
+  -- Jak dojdzie do końca i nie działa to zwracamy 'no', czyli dane słowa nie konkatenują się do w         
   ∈?Split : (w : Word {Alphabet}) → {P : GetSplitMorphismFromWords w} → (GetSplitDecidable P) → Dec (∈Split w P)
   ∈?Split ε getSD with getSD ε ε (null ε)
   ...| yes p = yes (∃ ε ε (null ε) p)

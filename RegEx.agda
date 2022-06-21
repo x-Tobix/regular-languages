@@ -77,6 +77,7 @@ get*r₂ : {r : RegExp}{s₁ s₂ :  Word{Alphabet}} → *Cont r s₁ s₂ → s
 get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 
 -- Funkcja mowiaca, że jeśli z w ∈ r₁ wynika fałsz i z w ∈ r₂ wynika fałsz to z w ∈ (r₁ + r₂) wynika fałsz 
+-- Rozbija w zależności od dowodu przynależności do języka generowanego przez sumę
 ⊻ : {r₁ r₂ : RegExp} → {w : Word {Alphabet}} → (w ∈ r₁ → ⊥) → (w ∈ r₂ → ⊥) → w ∈ (r₁ + r₂) → ⊥
 ⊻ l r (∈+ˡ w) = l w
 ⊻ l r (∈+ʳ w) = r w
