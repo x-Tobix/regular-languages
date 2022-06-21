@@ -28,12 +28,14 @@ data _∈_ :  Word {Alphabet} → RegExp → Set where
   ∈*₂ : ∀ {w : Word {Alphabet}} → ∀ {r : RegExp} → w ∈ (r ⊕ (r *)) →  w ∈ (r *)
 
 -- Łączność sumy wyrażeń regularnych
+-- Dowod przez rozbicie na przypadki
 +conn : {w : Word {Alphabet}} → {r₁ r₂ r₃ : RegExp} → w ∈ (r₁ + (r₂ + r₃)) → w ∈ ((r₁ + r₂) + r₃)
 +conn (∈+ˡ w) = ∈+ˡ (∈+ˡ w)
 +conn (∈+ʳ (∈+ˡ w)) = ∈+ˡ (∈+ʳ w)
 +conn (∈+ʳ (∈+ʳ w)) = ∈+ʳ w
 
 -- Przemienność sumy wyrażeń regularnych
+-- Dowod przez rozbicie na przypadki
 +alt : {w : Word {Alphabet}} → {r₁ r₂ : RegExp} → w ∈ (r₁ + r₂) → w ∈ (r₂ + r₁)
 +alt (∈+ˡ w) = ∈+ʳ w
 +alt (∈+ʳ w) = ∈+ˡ w
@@ -86,14 +88,17 @@ get*r₂ (get*Cont _ _ _ ∈₁ ∈₂) = ∈₂
 _∈?_ : (w : Word {Alphabet}) → (r : RegExp) → Dec (w ∈ r)
 
 -- Jeszcze troche funkcji pomocniczych
+
 -- Funkcja decydujaca o tym czy slowo o danym podziale nalezy do jezyka generowanego przez konkatenacje danych wyrazen regularnych
+-- Dowod ze wzgledu na wartosci s₁∈?r₁ i s₂∈r₂
 dec⊕ : (r₁ r₂ : RegExp)(s s₁ s₂ : Word {Alphabet})(sp : Split s s₁ s₂) → Dec (⨁Cont r₁ r₂ s₁ s₂)    
 dec⊕ r₁ r₂ s s₁ s₂ sp with s₁ ∈? r₁ | s₂ ∈? r₂
 ...| yes p₁ | yes p₂ = yes (get⨁Cont p₁ p₂)
 ...| yes p  | no ¬p  = no (λ p → ¬p (get⊕r₂ p))
 ...| no ¬p  | _      = no (λ p → ¬p (get⊕r₁ p))
 
--- Funkcja decydujaca o tym czy slowo o zadanym podziale nalezy do jezyka generowanego przez gwiazde Kleenego danego wyrazenia regularnego 
+-- Funkcja decydujaca o tym czy slowo o zadanym podziale nalezy do jezyka generowanego przez gwiazde Kleenego danego wyrazenia regularnego
+-- Dowod dla slowa o podziale w₁=ε i w₂=w osobno, a reszta ze wzgledu na (l∷s₁)∈?r i s₂∈?r*
 {-# NON_TERMINATING #-}
 dec* : (r : RegExp)(s s₁ s₂ :  Word {Alphabet})(sp : Split s s₁ s₂) → Dec (*Cont r s₁ s₂)
 dec* r s .ε .s (null .s) = no (λ ())
@@ -103,11 +108,14 @@ dec* r ._ (l ∷ s₁) s₂ (cont l s sp) with (l ∷ s₁) ∈? r | s₂ ∈? (
 ...| no ¬p  | _      = no (λ p → ¬p( get*r₁ p))
 
 -- Zaczynamy definiowac _∈?_
+-- Do ∅ nic nie nalezy
 w ∈? ∅ = no (λ ())
 
+-- Do Ε nalezy tylko ε
 ε ∈? Ε = yes ∈Ε
 (x ∷ w) ∈? Ε = no (λ ())
 
+-- Pojedyncza litera nalezy do jezyka, tylko jak ta sama litera tworzy wyrazenie regularne
 ε ∈? (literal x) = no (λ ())
 (a ∷ ε) ∈? (literal a) = yes ∈literal
 (a ∷ ε) ∈? (literal b) = no (λ ())
@@ -115,18 +123,22 @@ w ∈? ∅ = no (λ ())
 (b ∷ ε) ∈? (literal b) = yes ∈literal
 (w₁ ∷ (w₂ ∷ ws)) ∈? (literal x) = no (λ ())
 
+-- Slowo nalezy do sumy jesli nalezy do jezyka generowanego przez ktores z wyrazen regularnych
 w ∈? (r₁ + r₂) with w ∈? r₁ | w ∈? r₂
 ...| yes t₁ | yes  t₂ = yes (∈+ˡ t₁)
 ...| yes t₁ | no t₂ = yes (∈+ˡ t₁)
 ...| no t₁  | yes t₂ = yes (∈+ʳ t₂)
 ...| no t₁  | no t₂ = no (λ x → ⊻ t₁ t₂ x)
 
+-- Slowo nalezy do konkatenacji, jesli istnieje podzial pasujacy do wyrazen regularnych r₁ i r₂
 w ∈? (r₁ ⊕ r₂) with ∈?Split w (dec⊕ r₁ r₂ w)
 ...| yes (∃ w₁ w₂ sp (get⨁Cont x x₁)) = yes (∈⊕ {w} {w₁} {w₂} {r₁} {r₂} sp x x₁)
 ...| no p = no getNoConcat
   where getNoConcat : w ∈ (r₁ ⊕ r₂) → ⊥
         getNoConcat (∈⊕ {w} {w₁} {w₂} {r₁} {r₂} x p₁ p₂) = p (∃ w₁ w₂ x (get⨁Cont p₁ p₂))
-  
+
+-- Slowo puste zawsze nalezy do r*
+-- W zaleznosci od tego czy istnieje podzial spelniajacy dec*
 ε ∈? (r *) = yes ∈*₁
 (x ∷ w) ∈? (r *) with ∈?Split (x ∷ w) (dec* r (x ∷ w))
 ...| yes (∃ .(l ∷ w₁) s₂ sp (get*Cont l w₁ .s₂ x₁ x₂)) = yes (∈*₂ (∈⊕ sp x₁ x₂))
